@@ -1,9 +1,33 @@
 use fmt;
 use math;
+use math::random;
 use rt;
 use sdl2::{ SDL_RendererFlags, SDL_WindowFlags, SDL_EventType, SDL_TextureAccess };
 use sdl2;
 use strings;
+
+def WIDTH: int = 1280;
+def HEIGHT: int = 800;
+def PIXEL_SIZE: int = 3;
+let COLORS: []u32 = [
+	0xfff4f4f4,
+	0xff73eff7,
+	0xff41a6f6,
+	0xff3b5dc9,
+	0xff29366f,
+	0xff257179,
+	0xff38b764,
+	0xffa7f070,
+	0xffffcd75,
+	0xffef7d57,
+	0xffb13e53,
+	0xff5d275d,
+	0xff1a1c2c,
+	0xff333c57,
+	0xff566c86,
+	0xff94b0c2,
+];
+def N_COLORS: u32 = 16;
 
 export fn main() void = {
 	match (run()) {
@@ -14,23 +38,20 @@ export fn main() void = {
 };
 
 fn run() (void | sdl2::error) = {
-	const width = 1280;
-	const height = 800;
-
 	sdl2::SDL_Init(sdl2::SDL_INIT_VIDEO)!;
 	defer sdl2::SDL_Quit();
 
 	const window = sdl2::SDL_CreateWindow("",
 		sdl2::SDL_WINDOWPOS_UNDEFINED, sdl2::SDL_WINDOWPOS_UNDEFINED,
-		width, height, SDL_WindowFlags::SHOWN)?;
+		WIDTH, HEIGHT, SDL_WindowFlags::SHOWN)?;
 	defer sdl2::SDL_DestroyWindow(window);
 
 	const renderer = sdl2::SDL_CreateRenderer(window, -1,
-		SDL_RendererFlags::ACCELERATED | SDL_RendererFlags::PRESENTVSYNC)?;
+		SDL_RendererFlags::ACCELERATED)?;
 	defer sdl2::SDL_DestroyRenderer(renderer);
 
 	const pixels = sdl2::SDL_CreateTexture(renderer,
-		sdl2::SDL_PIXELFORMAT_ARGB8888, SDL_TextureAccess::STREAMING, width, height)!;
+		sdl2::SDL_PIXELFORMAT_ARGB8888, SDL_TextureAccess::STREAMING, WIDTH, HEIGHT)!;
 
 	let t_last = sdl2::SDL_GetTicks(): f64 / 1000f64;
 	let t = sdl2::SDL_GetTicks(): f64 / 1000f64;
@@ -50,13 +71,18 @@ fn run() (void | sdl2::error) = {
 		let pitch = 0i;
 		sdl2::SDL_LockTexture(pixels, null, &data, &pitch)!;
 
-		rt::memset(data: *void, 0, (pitch * height): size);
+		rt::memset(data: *void, 0, (pitch * HEIGHT): size);
 
-		for (let y = 0i; y < height; y += 1) {
-			for (let x = 0i; x < width; x += 1) {
-				let row: uintptr = data: uintptr + (pitch * y): uintptr;
-				let pixel = (row + (x * size(uint): int): uintptr): *uint;
-				*pixel = get_pixel(x, y, t, dt);
+		for (let y = 0i; y < HEIGHT; y += PIXEL_SIZE) {
+			for (let x = 0i; x < WIDTH; x += PIXEL_SIZE) {
+				const val = get_pixel(x, y, t, dt);
+				for (let py = 0i; py < PIXEL_SIZE; py += 1) {
+					let row: uintptr = data: uintptr + (pitch * (y + py)): uintptr;
+					for (let px = 0i; px < PIXEL_SIZE; px += 1) {
+						let pixel = (row + ((x + px) * size(uint): int): uintptr): *uint;
+						*pixel = val;
+					};
+				};
 			};
 		};
 
@@ -67,11 +93,19 @@ fn run() (void | sdl2::error) = {
 	};
 };
 
+fn pos(x: f64) f64 = (x + 1f64) / 2f64;
+
+fn to_cidx(x: f64) int = (x * ((N_COLORS: f64) - 1f64)): int;
+
 fn get_pixel(x: int, y: int, t: f64, dt: f64) uint = {
-	let color: u32 = 0xff000000;
-	let r = (math::sinf64(t) * 256f64 / 8f64): u32;
-	let g = (math::sinf64(t) * 256f64 / 2f64): u32;
-	let b = (math::sinf64(t) * 256f64): u32;
-	color = color | (r << (4 * 4)) | (g << (4 * 2)) | b;
+	let r = math::random::init(0);
+	let rx = math::random::u64n(&r, 20000): f64 / 20000f64 * 10f64;
+	let ry = math::random::u64n(&r, 20000): f64 / 20000f64 * 10f64;
+	let st = math::sinf64(t);
+	let x_stretch = 12f64 + st * 2f64;
+	let y_stretch = 14f64 - st * 3f64;
+	let x_val = math::modf64(pos(math::sinf64((x: f64 + rx) / WIDTH: f64 * x_stretch)) + t * 0.2f64, 1f64);
+	let y_val = math::modf64(pos(math::sinf64((y: f64 + ry) / HEIGHT: f64 * y_stretch)) + t * 0.2f64, 1f64);
+	let color = COLORS[to_cidx(math::modf64(x_val + y_val, 1f64))];
 	return color;
 };
