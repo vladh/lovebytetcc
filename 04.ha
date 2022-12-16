@@ -97,15 +97,19 @@ fn pos(x: f64) f64 = (x + 1f64) / 2f64;
 
 fn to_cidx(x: f64) int = (x * ((N_COLORS: f64) - 1f64)): int;
 
+fn maxf64(x: f64, y: f64) f64 = if (x > y) { return x; } else { return y; };
+
 fn get_pixel(x: int, y: int, t: f64, dt: f64) uint = {
-	let r = math::random::init(0);
-	let rx = math::random::u64n(&r, 20000): f64 / 20000f64 * 10f64;
-	let ry = math::random::u64n(&r, 20000): f64 / 20000f64 * 10f64;
+	let r = math::random::init((x + y * WIDTH): u64);
+	let rx = (math::random::u64n(&r, 20000): f64 / 20000f64 * 1.005f64 - 0.5f64) * 12f64;
+	let ry = (math::random::u64n(&r, 20000): f64 / 20000f64 * 1.010f64 - 0.5f64) * 14f64;
 	let st = math::sinf64(t);
-	let x_stretch = 12f64 + st * 2f64;
-	let y_stretch = 14f64 - st * 3f64;
-	let x_val = math::modf64(pos(math::sinf64((x: f64 + rx) / WIDTH: f64 * x_stretch)) + t * 0.2f64, 1f64);
-	let y_val = math::modf64(pos(math::sinf64((y: f64 + ry) / HEIGHT: f64 * y_stretch)) + t * 0.2f64, 1f64);
+	let x_stretch = 11f64 + st * 1f64;
+	let y_stretch = 9f64 - st * 2f64;
+	let tx = t * 20f64;
+	let ty = t * 10f64;
+	let x_val = math::modf64(pos(math::sinf64((x: f64 + rx + tx) / WIDTH: f64 * x_stretch)) + t * 0.1f64, 1f64);
+	let y_val = math::modf64(pos(math::sinf64((y: f64 + ry + ty) / HEIGHT: f64 * y_stretch)) + t * 0.1f64, 1f64);
 	let color = COLORS[to_cidx(math::modf64(x_val + y_val, 1f64))];
 	return color;
 };
