@@ -1,0 +1,3 @@
+[submodule "vendor/hare-sdl2"]
+	path = vendor/hare-sdl2
+	url = git@git.sr.ht:~vladh/hare-sdl2
