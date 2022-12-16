@@ -10,29 +10,14 @@ def WIDTH: int = 1280;
 def HEIGHT: int = 800;
 def PIXEL_SIZE: int = 3;
 let COLORS: []u32 = [
-	0xfff4f4f4,
-	0xff73eff7,
-	0xff41a6f6,
-	0xff3b5dc9,
-	0xff29366f,
-	0xff257179,
-	0xff38b764,
-	0xffa7f070,
-	0xffffcd75,
-	0xffef7d57,
-	0xffb13e53,
-	0xff5d275d,
-	0xff1a1c2c,
-	0xff333c57,
-	0xff566c86,
-	0xff94b0c2,
+	0xfff4f4f4, 0xff73eff7, 0xff41a6f6, 0xff3b5dc9, 0xff29366f, 0xff257179, 0xff38b764, 0xffa7f070,
+	0xffffcd75, 0xffef7d57, 0xffb13e53, 0xff5d275d, 0xff1a1c2c, 0xff333c57, 0xff566c86, 0xff94b0c2
 ];
 def N_COLORS: u32 = 16;
 
 export fn main() void = {
 	match (run()) {
-	case let err: sdl2::error =>
-		fmt::fatal("SDL2 error: {}", sdl2::strerror(err));
+	case let err: sdl2::error => fmt::fatal("SDL2 error: {}", sdl2::strerror(err));
 	case void => void;
 	};
 };
@@ -41,13 +26,11 @@ fn run() (void | sdl2::error) = {
 	sdl2::SDL_Init(sdl2::SDL_INIT_VIDEO)!;
 	defer sdl2::SDL_Quit();
 
-	const window = sdl2::SDL_CreateWindow("",
-		sdl2::SDL_WINDOWPOS_UNDEFINED, sdl2::SDL_WINDOWPOS_UNDEFINED,
+	const window = sdl2::SDL_CreateWindow("", sdl2::SDL_WINDOWPOS_UNDEFINED, sdl2::SDL_WINDOWPOS_UNDEFINED,
 		WIDTH, HEIGHT, SDL_WindowFlags::SHOWN)?;
 	defer sdl2::SDL_DestroyWindow(window);
 
-	const renderer = sdl2::SDL_CreateRenderer(window, -1,
-		SDL_RendererFlags::ACCELERATED)?;
+	const renderer = sdl2::SDL_CreateRenderer(window, -1, SDL_RendererFlags::ACCELERATED)?;
 	defer sdl2::SDL_DestroyRenderer(renderer);
 
 	const pixels = sdl2::SDL_CreateTexture(renderer,
@@ -72,7 +55,6 @@ fn run() (void | sdl2::error) = {
 		sdl2::SDL_LockTexture(pixels, null, &data, &pitch)!;
 
 		rt::memset(data: *void, 0, (pitch * HEIGHT): size);
-
 		for (let y = 0i; y < HEIGHT; y += PIXEL_SIZE) {
 			for (let x = 0i; x < WIDTH; x += PIXEL_SIZE) {
 				const val = get_pixel(x, y, t, dt);
@@ -96,8 +78,6 @@ fn run() (void | sdl2::error) = {
 fn pos(x: f64) f64 = (x + 1f64) / 2f64;
 
 fn to_cidx(x: f64) int = (x * ((N_COLORS: f64) - 1f64)): int;
-
-fn maxf64(x: f64, y: f64) f64 = if (x > y) { return x; } else { return y; };
 
 fn get_pixel(x: int, y: int, t: f64, dt: f64) uint = {
 	let r = math::random::init((x + y * WIDTH): u64);
